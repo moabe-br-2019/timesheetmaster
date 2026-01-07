@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { User, Lock, ArrowRight, Loader2 } from 'lucide-react';
 
 const Login = ({ onLogin }) => {
-  const [isRegistering, setIsRegistering] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -13,10 +12,8 @@ const Login = ({ onLogin }) => {
     setLoading(true);
     setError('');
 
-    const endpoint = isRegistering ? '/api/auth/register' : '/api/auth/login';
-
     try {
-      const res = await fetch(endpoint, {
+      const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
@@ -28,14 +25,9 @@ const Login = ({ onLogin }) => {
         throw new Error(data.error || 'Something went wrong');
       }
 
-      if (isRegistering) {
-        setIsRegistering(false);
-        setError('Conta criada! Faça login.');
-      } else {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        onLogin(data.user);
-      }
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      onLogin(data.user);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -48,7 +40,7 @@ const Login = ({ onLogin }) => {
       <div className="bg-slate-900 border border-slate-800 w-full max-w-md p-8 rounded-[2rem] shadow-2xl">
         <div className="text-center mb-8">
           <div className="w-12 h-12 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-900/40 mx-auto mb-4">T</div>
-          <h1 className="text-2xl font-black text-white">{isRegistering ? 'Criar Conta' : 'Bem-vindo de volta'}</h1>
+          <h1 className="text-2xl font-black text-white">Bem-vindo de volta</h1>
           <p className="text-slate-500 text-sm mt-2">Timesheet<span className="text-indigo-500 font-bold">Master</span></p>
         </div>
 
@@ -96,20 +88,11 @@ const Login = ({ onLogin }) => {
           >
             {loading ? <Loader2 size={20} className="animate-spin" /> : (
               <>
-                {isRegistering ? 'Cadastrar' : 'Entrar'} <ArrowRight size={20} />
+                Entrar <ArrowRight size={20} />
               </>
             )}
           </button>
         </form>
-
-        <div className="mt-6 text-center">
-          <button 
-            onClick={() => { setIsRegistering(!isRegistering); setError(''); }}
-            className="text-slate-500 hover:text-indigo-400 text-sm font-medium transition-colors"
-          >
-            {isRegistering ? 'Já tem uma conta? Entre aqui.' : 'Não tem conta? Crie uma agora.'}
-          </button>
-        </div>
       </div>
     </div>
   );
