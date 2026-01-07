@@ -1,0 +1,7 @@
+# Development Environment Variables
+# Copy this file to .dev.vars and fill in your actual values
+# NEVER commit .dev.vars to git!
+
+# JWT Secret - Generate a secure random string (128+ characters recommended)
+# To generate: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+JWT_SECRET=your_generated_secret_key_here
