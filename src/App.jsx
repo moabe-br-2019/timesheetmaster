@@ -21,13 +21,24 @@ import {
   CheckCircle2,
   Circle,
   User,
-  Key
+  Key,
+  Edit,
+  FileText,
+  CreditCard
 } from 'lucide-react';
 import Login from './Login';
 import Users from './Users';
+import Invoices from './Invoices';
+import PaymentMethods from './PaymentMethods';
+import InvoicePrint from './InvoicePrint';
 import { Users as UsersIcon } from 'lucide-react';
 
 const App = () => {
+  // Verificar se estamos em modo de impressão
+  const urlParams = new URLSearchParams(window.location.search);
+  const printMode = urlParams.get('print');
+  const invoiceId = urlParams.get('invoice');
+
   // --- Auth State ---
   const [user, setUser] = useState(() => {
     const saved = localStorage.getItem('user');
@@ -61,6 +72,7 @@ const App = () => {
 
   const [registros, setRegistros] = useState([]);
   const [projetos, setProjetos] = useState([]);
+  const [clients, setClients] = useState([]);
 
   // --- Estados para Modais de Confirmação ---
   const [deleteConfirmModal, setDeleteConfirmModal] = useState({
@@ -82,6 +94,20 @@ const App = () => {
   });
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState('');
+
+  // Estados para edição de atividade
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    id: null,
+    projetoId: '',
+    atividade: '',
+    descricao: '',
+    duracao: '',
+    data: ''
+  });
+
+  // Estado para invoice em modo de impressão
+  const [printInvoice, setPrintInvoice] = useState(null);
 
   // --- API Helpers ---
   const authHeader = () => ({
@@ -116,6 +142,16 @@ const App = () => {
           if (data && Array.isArray(data)) setRegistros(data);
         })
         .catch(err => console.error("Error fetching records:", err));
+
+      if (isAdmin) {
+        fetch('/api/clients', { headers: authHeader() })
+          .then(checkAuthResponse)
+          .then(res => res ? res.json() : null)
+          .then(data => {
+            if (data && Array.isArray(data)) setClients(data);
+          })
+          .catch(err => console.error("Error fetching clients:", err));
+      }
     }
   }, [user]);
 
@@ -132,11 +168,27 @@ const App = () => {
         if (isLogoutConfirmOpen) {
           setIsLogoutConfirmOpen(false);
         }
+        if (isEditModalOpen) {
+          setIsEditModalOpen(false);
+        }
       }
     };
     window.addEventListener('keydown', handleEsc);
     return () => window.removeEventListener('keydown', handleEsc);
-  }, [deleteConfirmModal.isOpen, isProfileModalOpen, isLogoutConfirmOpen]);
+  }, [deleteConfirmModal.isOpen, isProfileModalOpen, isLogoutConfirmOpen, isEditModalOpen]);
+
+  // Buscar invoice para modo de impressão
+  useEffect(() => {
+    if (printMode === 'true' && invoiceId && user) {
+      fetch(`/api/invoices/${invoiceId}`, { headers: authHeader() })
+        .then(checkAuthResponse)
+        .then(res => res ? res.json() : null)
+        .then(data => {
+          if (data) setPrintInvoice(data);
+        })
+        .catch(err => console.error("Error fetching invoice for print:", err));
+    }
+  }, [printMode, invoiceId, user]);
 
   // --- Estados do Formulário de Registro ---
   const [form, setForm] = useState({
@@ -510,6 +562,85 @@ const App = () => {
     }
   };
 
+  const openEditModal = (registro) => {
+    setEditForm({
+      id: registro.id,
+      projetoId: registro.projetoId,
+      atividade: registro.atividade,
+      descricao: registro.descricao || '',
+      duracao: registro.horas,
+      data: registro.data
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditRegistro = async (e) => {
+    e.preventDefault();
+
+    if (!editForm.projetoId || !editForm.atividade || !editForm.duracao || !editForm.data) {
+      alert('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    const projeto = projetos.find(p => p.id === editForm.projetoId);
+    if (!projeto) {
+      alert('Projeto não encontrado');
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/registros/${editForm.id}`, {
+        method: 'PATCH',
+        headers: authHeader(),
+        body: JSON.stringify({
+          data: editForm.data,
+          projetoId: editForm.projetoId,
+          atividade: editForm.atividade,
+          descricao: editForm.descricao,
+          horas: Number(editForm.duracao),
+          valorHoraNaEpoca: projeto.valorHora,
+          moedaNaEpoca: projeto.moeda,
+          projetoNome: projeto.nome
+        })
+      });
+
+      if (!await checkAuthResponse(res)) return;
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Erro ao atualizar atividade');
+      }
+
+      // Atualizar lista local
+      setRegistros(registros.map(r => {
+        if (r.id === editForm.id) {
+          return {
+            ...r,
+            data: editForm.data,
+            projetoId: editForm.projetoId,
+            atividade: editForm.atividade,
+            descricao: editForm.descricao,
+            horas: Number(editForm.duracao),
+            projetoNome: projeto.nome,
+            valorHoraNaEpoca: projeto.valorHora,
+            moedaNaEpoca: projeto.moeda
+          };
+        }
+        return r;
+      }));
+
+      setIsEditModalOpen(false);
+      setEditForm({ id: null, projetoId: '', atividade: '', descricao: '', duracao: '', data: '' });
+    } catch (error) {
+      alert(error.message);
+    }
+  };
+
+  // --- Render Invoice Print if in print mode ---
+  if (printMode === 'true' && printInvoice) {
+    return <InvoicePrint invoice={printInvoice} />;
+  }
+
   // --- Render Login if not authenticated ---
   if (!user) {
     return <Login onLogin={handleLogin} />;
@@ -536,13 +667,25 @@ const App = () => {
               
               {isAdmin && (
                 <>
-                  <button 
+                  <button
                     onClick={() => setView('settings')}
                     className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'settings' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                   >
                     <Briefcase size={18} /> <span className="text-sm font-semibold hidden sm:inline">Meus Projetos</span>
                   </button>
-                  <button 
+                  <button
+                    onClick={() => setView('invoices')}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'invoices' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                  >
+                    <FileText size={18} /> <span className="text-sm font-semibold hidden sm:inline">Invoices</span>
+                  </button>
+                  <button
+                    onClick={() => setView('payments')}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'payments' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                  >
+                    <CreditCard size={18} /> <span className="text-sm font-semibold hidden sm:inline">Pagamentos</span>
+                  </button>
+                  <button
                     onClick={() => setView('users')}
                     className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'users' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                   >
@@ -577,6 +720,10 @@ const App = () => {
         
         {view === 'users' && isAdmin ? (
           <Users projects={projetos} />
+        ) : view === 'invoices' && isAdmin ? (
+          <Invoices projects={projetos} clients={clients} />
+        ) : view === 'payments' && isAdmin ? (
+          <PaymentMethods />
         ) : view === 'settings' && isAdmin ? (
           /* ABA DE PROJETOS */
           <div className="animate-in slide-in-from-bottom-6 duration-700 max-w-6xl mx-auto space-y-8">
@@ -857,6 +1004,15 @@ const App = () => {
                                 </button>
                               </div>
 
+                              {/* Botão Edit */}
+                              <button
+                                onClick={() => openEditModal(reg)}
+                                className="p-2 text-slate-600 hover:text-emerald-400 hover:bg-emerald-400/10 rounded-xl transition-all"
+                                title="Editar registro"
+                              >
+                                <Edit size={18} />
+                              </button>
+
                               {/* Botão Delete */}
                               <button
                                 onClick={() => openDeleteRegistroModal(reg)}
@@ -919,18 +1075,29 @@ const App = () => {
               <div>
                 <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest">O que você fez?</label>
                 {projetoAtualNoForm && projetoAtualNoForm.atividades.length > 0 ? (
-                  <select 
-                    required
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-2 outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer font-medium"
-                    value={form.atividade}
-                    onChange={(e) => setForm({...form, atividade: e.target.value})}
-                  >
-                    <option value="" className="bg-slate-900 text-slate-300">Selecione uma atividade...</option>
-                    {projetoAtualNoForm.atividades.map((a, i) => <option key={i} value={a} className="bg-slate-900 text-slate-300">{a}</option>)}
-                    <option value="Outra..." className="bg-slate-900 text-slate-300">Outra atividade...</option>
-                  </select>
+                  <>
+                    <select
+                      required
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-2 outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer font-medium"
+                      value={form.atividade}
+                      onChange={(e) => setForm({...form, atividade: e.target.value})}
+                    >
+                      <option value="" className="bg-slate-900 text-slate-300">Selecione uma atividade...</option>
+                      {projetoAtualNoForm.atividades.map((a, i) => <option key={i} value={a} className="bg-slate-900 text-slate-300">{a}</option>)}
+                      <option value="__custom__" className="bg-slate-900 text-slate-300">+ Criar atividade personalizada</option>
+                    </select>
+                    {form.atividade === '__custom__' && (
+                      <input
+                        required
+                        className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-3 outline-none focus:ring-2 focus:ring-indigo-500/50 placeholder:text-slate-700 font-medium"
+                        placeholder="Digite o nome da atividade personalizada..."
+                        autoFocus
+                        onChange={(e) => setForm({...form, atividade: e.target.value})}
+                      />
+                    )}
+                  </>
                 ) : (
-                  <input 
+                  <input
                     required
                     className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-2 outline-none focus:ring-2 focus:ring-indigo-500/50 placeholder:text-slate-700 font-medium"
                     placeholder="Ex: Refatoração de código"
@@ -1384,6 +1551,128 @@ const App = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de Edição de Atividade */}
+      {isEditModalOpen && isAdmin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-[2rem] shadow-2xl p-8 relative animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="absolute top-6 right-6 text-slate-500 hover:text-white transition-colors"
+            >
+              <X size={24} />
+            </button>
+
+            <h3 className="text-2xl font-black mb-6 flex items-center gap-3 text-white">
+              <Edit size={28} className="text-emerald-500" />
+              Editar Atividade
+            </h3>
+
+            <form onSubmit={handleEditRegistro} className="space-y-5 overflow-y-auto pr-2 custom-scrollbar">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest">Data</label>
+                  <input
+                    type="date"
+                    value={editForm.data}
+                    onChange={(e) => setEditForm({ ...editForm, data: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-2 outline-none focus:ring-2 focus:ring-emerald-500/50 font-mono font-bold"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest">Duração (horas)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={editForm.duracao}
+                    onChange={(e) => setEditForm({ ...editForm, duracao: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-2 outline-none focus:ring-2 focus:ring-emerald-500/50 font-mono font-bold"
+                    placeholder="0.0"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest">Projeto</label>
+                <select
+                  value={editForm.projetoId}
+                  onChange={(e) => setEditForm({ ...editForm, projetoId: e.target.value, atividade: '' })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-2 outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none cursor-pointer font-medium"
+                  required
+                >
+                  <option value="" className="bg-slate-900 text-slate-300">Selecione um projeto</option>
+                  {projetos.map(proj => (
+                    <option key={proj.id} value={proj.id} className="bg-slate-900 text-slate-300">{proj.nome}</option>
+                  ))}
+                </select>
+              </div>
+
+              {editForm.projetoId && (
+                <div>
+                  <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest">Atividade</label>
+                  {(() => {
+                    const projeto = projetos.find(p => p.id === editForm.projetoId);
+                    const atividadesExistentes = projeto?.atividades || [];
+                    const isAtividadeCustomizada = editForm.atividade && !atividadesExistentes.includes(editForm.atividade);
+                    const selectValue = isAtividadeCustomizada ? '__custom__' : editForm.atividade;
+
+                    return (
+                      <>
+                        <select
+                          value={selectValue}
+                          onChange={(e) => {
+                            if (e.target.value === '__custom__') {
+                              setEditForm({ ...editForm, atividade: '__custom__' });
+                            } else {
+                              setEditForm({ ...editForm, atividade: e.target.value });
+                            }
+                          }}
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-2 outline-none focus:ring-2 focus:ring-emerald-500/50 appearance-none cursor-pointer font-medium"
+                          required
+                        >
+                          <option value="" className="bg-slate-900 text-slate-300">Selecione uma atividade</option>
+                          {atividadesExistentes.map((at, i) => (
+                            <option key={i} value={at} className="bg-slate-900 text-slate-300">{at}</option>
+                          ))}
+                          <option value="__custom__" className="bg-slate-900 text-slate-300">+ Criar atividade personalizada</option>
+                        </select>
+                        {(selectValue === '__custom__' || isAtividadeCustomizada) && (
+                          <input
+                            required
+                            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-3 outline-none focus:ring-2 focus:ring-emerald-500/50 placeholder:text-slate-700 font-medium"
+                            placeholder="Digite o nome da atividade personalizada..."
+                            value={editForm.atividade === '__custom__' ? '' : editForm.atividade}
+                            onChange={(e) => setEditForm({ ...editForm, atividade: e.target.value })}
+                            autoFocus
+                          />
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest">Descrição (Resumo)</label>
+                <textarea
+                  value={editForm.descricao}
+                  onChange={(e) => setEditForm({ ...editForm, descricao: e.target.value })}
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 mt-2 outline-none focus:ring-2 focus:ring-emerald-500/50 placeholder:text-slate-700 font-medium h-24 resize-none text-sm"
+                  placeholder="Descreva brevemente o que foi feito..."
+                />
+              </div>
+
+              <button className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-5 rounded-2xl shadow-xl shadow-emerald-900/40 transition-all active:scale-95 text-sm uppercase tracking-widest mt-2">
+                Salvar Alterações
+              </button>
+            </form>
           </div>
         </div>
       )}
