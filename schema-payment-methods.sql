@@ -1,12 +1,12 @@
 -- Schema para sistema de formas de pagamento
--- Suporta pagamentos brasileiros (PIX) e internacionais (transferência bancária)
+-- Suporta pagamentos brasileiros (PIX), internacionais (transferência bancária) e PayPal
 
 CREATE TABLE IF NOT EXISTS payment_methods (
   id TEXT PRIMARY KEY,                           -- UUID
   user_id INTEGER NOT NULL,                      -- Admin que criou
-  name TEXT NOT NULL,                            -- Nome descritivo (ex: "PIX Principal", "Bank Transfer USD")
-  type TEXT NOT NULL CHECK(type IN ('pix', 'international')), -- Tipo de pagamento
-  currency TEXT NOT NULL,                        -- BRL para PIX, USD para internacional
+  name TEXT NOT NULL,                            -- Nome descritivo (ex: "PIX Principal", "Bank Transfer USD", "PayPal")
+  type TEXT NOT NULL CHECK(type IN ('pix', 'international', 'paypal')), -- Tipo de pagamento
+  currency TEXT NOT NULL,                        -- BRL para PIX, USD para internacional/PayPal
 
   -- Campos para PIX (Brasil)
   pix_key TEXT,                                  -- Chave PIX (CPF, CNPJ, email, telefone, ou aleatória)
@@ -24,6 +24,15 @@ CREATE TABLE IF NOT EXISTS payment_methods (
   intermediary_bank_name TEXT,                   -- Nome do banco intermediário
   intermediary_bank_address TEXT,                -- Endereço do banco intermediário
   intermediary_account_number TEXT,              -- Número da conta no banco intermediário
+
+  -- Dados da entidade (PF/PJ)
+  entity_type TEXT,                              -- 'pf' ou 'pj'
+  entity_name TEXT,                              -- Nome completo (PF) ou Razão Social (PJ)
+  entity_tax_id TEXT,                            -- CPF (PF) ou CNPJ (PJ)
+
+  -- Campos para PayPal
+  paypal_email TEXT,                             -- Email PayPal
+  paypal_fee_percentage REAL,                    -- Taxa em % (ex: 6.0 para 6%)
 
   -- Metadata
   is_default INTEGER DEFAULT 0,                  -- 1 se for forma de pagamento padrão
