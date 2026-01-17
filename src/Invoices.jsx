@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { FileText, Plus, Eye, Trash2, CheckCircle2, X, Filter, Calendar } from 'lucide-react';
 import InvoiceView from './InvoiceView';
 
+// Função helper para formatar datas sem problemas de timezone
+const formatDateLocal = (dateString) => {
+  if (!dateString) return '';
+  const [year, month, day] = dateString.split('-');
+  return `${day}/${month}/${year}`;
+};
+
 const Invoices = ({ projects, clients }) => {
   const [invoices, setInvoices] = useState([]);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -245,7 +252,7 @@ const Invoices = ({ projects, clients }) => {
                       Cliente: <span className="text-slate-300">{invoice.client_name || invoice.client_email || 'Não especificado'}</span>
                     </p>
                     <p className="text-slate-500 text-xs">
-                      Período: {new Date(invoice.date_from).toLocaleDateString()} - {new Date(invoice.date_to).toLocaleDateString()}
+                      Período: {formatDateLocal(invoice.date_from)} - {formatDateLocal(invoice.date_to)}
                     </p>
                     <div className="flex items-center gap-4 mt-3">
                       <span className="text-emerald-400 font-mono font-black text-lg">

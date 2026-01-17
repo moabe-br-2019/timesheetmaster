@@ -1,5 +1,12 @@
 import React, { useEffect } from 'react';
 
+// Função helper para formatar datas sem problemas de timezone
+const formatDateLocal = (dateString) => {
+  if (!dateString) return '';
+  const [year, month, day] = dateString.split('-');
+  return `${day}/${month}/${year}`;
+};
+
 const InvoicePrint = ({ invoice }) => {
   const getSimboloMoeda = (code) => {
     const symbols = { BRL: 'R$', USD: 'US$', EUR: '€', GBP: '£' };
@@ -74,18 +81,18 @@ const InvoicePrint = ({ invoice }) => {
       <div className="grid grid-cols-3 gap-6 mb-8">
         <div>
           <p className="text-xs font-black text-slate-600 uppercase tracking-widest mb-1">Data de Emissão</p>
-          <p className="text-sm font-mono font-bold text-slate-900">{new Date(invoice.issue_date).toLocaleDateString('pt-BR')}</p>
+          <p className="text-sm font-mono font-bold text-slate-900">{formatDateLocal(invoice.issue_date)}</p>
         </div>
         {invoice.due_date && (
           <div>
             <p className="text-xs font-black text-slate-600 uppercase tracking-widest mb-1">Vencimento</p>
-            <p className="text-sm font-mono font-bold text-slate-900">{new Date(invoice.due_date).toLocaleDateString('pt-BR')}</p>
+            <p className="text-sm font-mono font-bold text-slate-900">{formatDateLocal(invoice.due_date)}</p>
           </div>
         )}
         <div>
           <p className="text-xs font-black text-slate-600 uppercase tracking-widest mb-1">Período</p>
           <p className="text-sm font-mono text-slate-900">
-            {new Date(invoice.date_from).toLocaleDateString('pt-BR')} - {new Date(invoice.date_to).toLocaleDateString('pt-BR')}
+            {formatDateLocal(invoice.date_from)} - {formatDateLocal(invoice.date_to)}
           </p>
         </div>
       </div>
@@ -107,7 +114,7 @@ const InvoicePrint = ({ invoice }) => {
           <tbody>
             {invoice.items?.map((item, index) => (
               <tr key={index} className="border-b border-slate-200">
-                <td className="p-3 text-sm font-mono text-slate-900">{new Date(item.data).toLocaleDateString('pt-BR')}</td>
+                <td className="p-3 text-sm font-mono text-slate-900">{formatDateLocal(item.data)}</td>
                 <td className="p-3 text-sm text-slate-900">{item.projeto_nome}</td>
                 <td className="p-3 text-sm text-slate-700">{item.atividade}</td>
                 <td className="p-3 text-sm font-mono text-right text-slate-900">{Number(item.horas).toFixed(2)}h</td>

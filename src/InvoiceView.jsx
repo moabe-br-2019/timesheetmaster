@@ -1,6 +1,13 @@
 import React from 'react';
 import { X, Printer } from 'lucide-react';
 
+// Função helper para formatar datas sem problemas de timezone
+const formatDateLocal = (dateString) => {
+  if (!dateString) return '';
+  const [year, month, day] = dateString.split('-');
+  return `${day}/${month}/${year}`;
+};
+
 const InvoiceView = ({ invoice, onClose, onRefresh }) => {
   const getSimboloMoeda = (code) => {
     const symbols = { BRL: 'R$', USD: 'US$', EUR: '€', GBP: '£' };
@@ -66,12 +73,12 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
             <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
               <div>
                 <p className="text-slate-600 font-semibold">Data de Emissão</p>
-                <p className="font-bold">{new Date(invoice.issue_date).toLocaleDateString('pt-BR')}</p>
+                <p className="font-bold">{formatDateLocal(invoice.issue_date)}</p>
               </div>
               {invoice.due_date && (
                 <div>
                   <p className="text-slate-600 font-semibold">Vencimento</p>
-                  <p className="font-bold">{new Date(invoice.due_date).toLocaleDateString('pt-BR')}</p>
+                  <p className="font-bold">{formatDateLocal(invoice.due_date)}</p>
                 </div>
               )}
             </div>
@@ -105,7 +112,7 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
           <div className="mb-8 bg-slate-50 p-4 rounded-lg border border-slate-200">
             <p className="text-xs font-black text-slate-600 uppercase tracking-widest mb-2">Período de Trabalho</p>
             <p className="font-bold text-slate-900">
-              {new Date(invoice.date_from).toLocaleDateString('pt-BR')} - {new Date(invoice.date_to).toLocaleDateString('pt-BR')}
+              {formatDateLocal(invoice.date_from)} - {formatDateLocal(invoice.date_to)}
             </p>
           </div>
 
@@ -126,7 +133,7 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
                 const subtotal = Number(item.horas) * Number(item.valor_hora_na_epoca);
                 return (
                   <tr key={item.id} className="border-b border-slate-200">
-                    <td className="py-3 text-sm text-slate-700">{new Date(item.data).toLocaleDateString('pt-BR')}</td>
+                    <td className="py-3 text-sm text-slate-700">{formatDateLocal(item.data)}</td>
                     <td className="py-3 text-sm text-slate-900 font-medium">{item.projeto_nome}</td>
                     <td className="py-3 text-sm text-slate-700">
                       <div>{item.atividade}</div>
