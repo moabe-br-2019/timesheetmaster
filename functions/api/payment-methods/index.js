@@ -123,34 +123,34 @@ export async function onRequestPost(context) {
         entity_type, entity_name, entity_tax_id,
         paypal_email, paypal_fee_percentage,
         is_default, is_active, notes, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
-      id,
-      user.id,
-      name,
-      type,
-      currency,
-      pixKey || null,
-      pixKeyType || null,
-      beneficiaryName || null,
-      beneficiaryAccountNumber || null,
-      swiftCode || null,
-      bankName || null,
-      bankAddress || null,
-      intermediarySwiftCode || null,
-      intermediaryBankName || null,
-      intermediaryBankAddress || null,
-      intermediaryAccountNumber || null,
-      entityType || null,
-      entityName || null,
-      entityTaxId || null,
-      paypalEmail || null,
-      paypalFeePercentage || null,
-      isDefault ? 1 : 0,
-      1, // is_active
-      notes || null,
-      now,
-      now
+      id,                                  // 1
+      user.id,                             // 2
+      name,                                // 3
+      type,                                // 4
+      currency,                            // 5
+      pixKey || null,                      // 6
+      pixKeyType || null,                  // 7
+      beneficiaryName || null,             // 8
+      beneficiaryAccountNumber || null,    // 9
+      swiftCode || null,                   // 10
+      bankName || null,                    // 11
+      bankAddress || null,                 // 12
+      intermediarySwiftCode || null,       // 13
+      intermediaryBankName || null,        // 14
+      intermediaryBankAddress || null,     // 15
+      intermediaryAccountNumber || null,   // 16
+      entityType || null,                  // 17
+      entityName || null,                  // 18
+      entityTaxId || null,                 // 19
+      paypalEmail || null,                 // 20
+      paypalFeePercentage || null,         // 21
+      isDefault ? 1 : 0,                   // 22
+      1,                                   // 23 - is_active
+      notes || null,                       // 24
+      now,                                 // 25 - created_at
+      now                                  // 26 - updated_at
     ).run();
 
     return jsonResponse({
