@@ -102,7 +102,15 @@ const InvoicePrint = ({ invoice, language = 'pt', showDescription = false }) => 
       {/* Itens */}
       <div className="mb-6">
         <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3">{t('Itens', 'Items')}</h3>
-        <table className="w-full border-collapse">
+        <table className="w-full border-collapse table-fixed">
+          <colgroup>
+            <col style={{ width: '8%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '35%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '16%' }} />
+          </colgroup>
           <thead>
             <tr className="bg-slate-100 border-b-2 border-slate-300">
               <th className="text-left p-2 text-[10px] font-black text-slate-700 uppercase tracking-widest">{t('Data', 'Date')}</th>
@@ -119,16 +127,16 @@ const InvoicePrint = ({ invoice, language = 'pt', showDescription = false }) => 
                 <td className="p-2 text-xs font-mono text-slate-900">{formatDateLocal(item.data)}</td>
                 <td className="p-2 text-xs text-slate-900">{item.projeto_nome}</td>
                 <td className="p-2 text-xs text-slate-700">
-                  <div>{item.atividade}</div>
+                  <div className="break-words">{item.atividade}</div>
                   {showDescription && item.descricao && (
-                    <div className="text-[10px] text-slate-500 mt-1 leading-tight">{item.descricao}</div>
+                    <div className="text-[10px] text-slate-500 mt-1 leading-tight break-words">{item.descricao}</div>
                   )}
                 </td>
-                <td className="p-2 text-xs font-mono text-right text-slate-900">{Number(item.horas).toFixed(2)}h</td>
-                <td className="p-2 text-xs font-mono text-right text-slate-900">
+                <td className="p-2 text-xs font-mono text-right text-slate-900 whitespace-nowrap">{Number(item.horas).toFixed(2)}h</td>
+                <td className="p-2 text-xs font-mono text-right text-slate-900 whitespace-nowrap">
                   {getSimboloMoeda(item.moeda_na_epoca || invoice.currency)} {Number(item.valor_hora_na_epoca).toFixed(2)}
                 </td>
-                <td className="p-2 text-xs font-mono text-right font-bold text-slate-900">
+                <td className="p-2 text-xs font-mono text-right font-bold text-slate-900 whitespace-nowrap">
                   {getSimboloMoeda(item.moeda_na_epoca || invoice.currency)} {(Number(item.horas) * Number(item.valor_hora_na_epoca)).toFixed(2)}
                 </td>
               </tr>
