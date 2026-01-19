@@ -10,43 +10,50 @@ export async function onRequestPost(context) {
   const invoiceId = context.params.id;
 
   try {
-    // Verificar se invoice existe e pertence ao usuário
+    // 1. Verificar se a invoice existe e pertence ao usuário
     const { results: invoices } = await context.env.DB.prepare(`
       SELECT id, status FROM invoices WHERE id = ? AND user_id = ?
     `).bind(invoiceId, user.id).all();
 
     if (invoices.length === 0) {
-      return jsonResponse({ error: 'Invoice not found' }, 404);
+      return jsonResponse({ error: 'Invoice não encontrada' }, 404);
     }
 
-    if (invoices[0].status === 'paid') {
-      return jsonResponse({ message: 'Invoice já está marcada como paga' });
+    const invoice = invoices[0];
+
+    // 2. Verificar se já está paga
+    if (invoice.status === 'paid') {
+      return jsonResponse({ message: 'Invoice já está marcada como paga' }, 200);
     }
 
-    // Usar transação para garantir atomicidade
-    const statements = [
-      // 1. Atualizar status da invoice
-      context.env.DB.prepare(`
-        UPDATE invoices
-        SET status = 'paid', updated_at = ?
-        WHERE id = ?
-      `).bind(Math.floor(Date.now() / 1000), invoiceId),
+    // 3. Atualizar status da invoice para 'paid'
+    await context.env.DB.prepare(`
+      UPDATE invoices
+      SET status = 'paid', updated_at = ?
+      WHERE id = ?
+    `).bind(Date.now(), invoiceId).run();
 
-      // 2. Marcar todos registros associados como pagos
-      context.env.DB.prepare(`
-        UPDATE registros
-        SET pago = 1
-        WHERE id IN (
-          SELECT registro_id
-          FROM invoice_items
-          WHERE invoice_id = ?
-        )
-      `).bind(invoiceId)
-    ];
+    // 4. Buscar todos os registros vinculados a esta invoice
+    const { results: registroIds } = await context.env.DB.prepare(`
+      SELECT registro_id FROM invoice_items WHERE invoice_id = ?
+    `).bind(invoiceId).all();
 
-    await context.env.DB.batch(statements);
+    // 5. Marcar todos os registros como pagos
+    if (registroIds.length > 0) {
+      const updateStatements = registroIds.map(row =>
+        context.env.DB.prepare(
+          'UPDATE registros SET pago = 1 WHERE id = ?'
+        ).bind(row.registro_id)
+      );
 
-    return jsonResponse({ message: 'Invoice marcada como paga com sucesso' });
+      await context.env.DB.batch(updateStatements);
+    }
+
+    return jsonResponse({
+      success: true,
+      message: 'Invoice marcada como paga com sucesso',
+      registrosAtualizados: registroIds.length
+    });
 
   } catch (err) {
     console.error('Error marking invoice as paid:', err);

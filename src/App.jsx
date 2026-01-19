@@ -38,6 +38,8 @@ const App = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const printMode = urlParams.get('print');
   const invoiceId = urlParams.get('invoice');
+  const printLang = urlParams.get('lang') || 'pt';
+  const printDesc = urlParams.get('desc') === 'true';
 
   // --- Auth State ---
   const [user, setUser] = useState(() => {
@@ -638,7 +640,7 @@ const App = () => {
 
   // --- Render Invoice Print if in print mode ---
   if (printMode === 'true' && printInvoice) {
-    return <InvoicePrint invoice={printInvoice} />;
+    return <InvoicePrint invoice={printInvoice} language={printLang} showDescription={printDesc} />;
   }
 
   // --- Render Login if not authenticated ---

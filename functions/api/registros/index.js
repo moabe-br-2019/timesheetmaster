@@ -26,6 +26,7 @@ export async function onRequestGet(context) {
 
     const records = results.map(r => ({
       ...r,
+      horas: r.horas, // Ensure horas is mapped
       valorHoraNaEpoca: r.valor_hora_na_epoca,
       moedaNaEpoca: r.moeda_na_epoca,
       projetoNome: r.projeto_nome,

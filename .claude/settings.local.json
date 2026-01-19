@@ -17,7 +17,14 @@
       "Bash(wrangler d1 list:*)",
       "Bash(set:*)",
       "Bash(wrangler pages deployment tail:*)",
-      "Bash(npm run db:seed:*)"
+      "Bash(npm run db:seed:*)",
+      "Bash(npx wrangler d1 execute:*)",
+      "Bash(npm run dev:*)",
+      "Bash(timeout /t 10 /nobreak)",
+      "Bash(npx wrangler pages deploy:*)",
+      "Bash(npx wrangler:*)",
+      "Bash(npm run deploy:*)",
+      "Bash(\"functions/api/invoices/[id]/mark-paid.js\")"
     ]
   }
 }
