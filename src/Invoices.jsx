@@ -262,7 +262,7 @@ const Invoices = ({ projects, clients }) => {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 items-center">
                     <button
                       onClick={() => handleViewInvoice(invoice)}
                       className="p-2 bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 rounded-xl transition-all"
@@ -273,10 +273,11 @@ const Invoices = ({ projects, clients }) => {
                     {invoice.status !== 'paid' && (
                       <button
                         onClick={() => handleMarkPaid(invoice.id)}
-                        className="p-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 rounded-xl transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-green-600 hover:bg-green-500 text-white rounded-xl transition-all text-sm font-bold"
                         title="Marcar como Paga"
                       >
-                        <CheckCircle2 size={18} />
+                        <CheckCircle2 size={16} />
+                        Marcar Paga
                       </button>
                     )}
                     {(invoice.status === 'draft' || invoice.status === 'cancelled') && (
