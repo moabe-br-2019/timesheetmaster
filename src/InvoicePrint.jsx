@@ -158,13 +158,27 @@ const InvoicePrint = ({ invoice, language = 'pt', showDescription = false }) => 
               </span>
             </div>
           )}
+          {invoice.payment_method?.type === 'stripe' && invoice.payment_method?.stripe_fee_percentage && invoice.payment_method?.show_fee_on_invoice === 1 && (
+            <div className="flex justify-between py-2 border-b border-slate-200">
+              <span className="text-xs font-medium text-slate-600">{t('Taxa Stripe', 'Stripe Fee')} ({invoice.payment_method.stripe_fee_percentage}%):</span>
+              <span className="text-xs font-mono font-bold text-red-600">
+                {getSimboloMoeda(invoice.currency)} {(Number(invoice.total_amount) * Number(invoice.payment_method.stripe_fee_percentage) / 100).toFixed(2)}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between py-2 bg-indigo-50 px-3 rounded-lg mt-2">
             <span className="text-sm font-black text-slate-900 uppercase tracking-wide">{t('Total:', 'Total:')}</span>
             <span className="text-lg font-mono font-black text-indigo-600">
               {getSimboloMoeda(invoice.currency)} {
-                invoice.payment_method?.type === 'paypal' && invoice.payment_method?.paypal_fee_percentage
-                  ? (Number(invoice.total_amount) + (Number(invoice.total_amount) * Number(invoice.payment_method.paypal_fee_percentage) / 100)).toFixed(2)
-                  : Number(invoice.total_amount).toFixed(2)
+                (() => {
+                  let total = Number(invoice.total_amount);
+                  if (invoice.payment_method?.type === 'paypal' && invoice.payment_method?.paypal_fee_percentage) {
+                    total += Number(invoice.total_amount) * Number(invoice.payment_method.paypal_fee_percentage) / 100;
+                  } else if (invoice.payment_method?.type === 'stripe' && invoice.payment_method?.stripe_fee_percentage && invoice.payment_method?.show_fee_on_invoice === 1) {
+                    total += Number(invoice.total_amount) * Number(invoice.payment_method.stripe_fee_percentage) / 100;
+                  }
+                  return total.toFixed(2);
+                })()
               }
             </span>
           </div>
@@ -236,6 +250,17 @@ const InvoicePrint = ({ invoice, language = 'pt', showDescription = false }) => 
                 <p className="text-xs font-mono font-bold text-slate-900">{invoice.payment_method.paypal_email}</p>
                 {invoice.payment_method.paypal_fee_percentage && (
                   <p className="text-[10px] text-slate-500 mt-1">{t('Taxa', 'Fee')}: {invoice.payment_method.paypal_fee_percentage}%</p>
+                )}
+              </div>
+            </div>
+          ) : invoice.payment_method.type === 'stripe' ? (
+            <div className="space-y-2">
+              <p className="text-xs font-bold text-slate-900">Stripe - {invoice.payment_method.name}</p>
+              <div className="bg-white p-3 rounded border border-slate-300">
+                <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-1">Email Stripe</p>
+                <p className="text-xs font-mono font-bold text-slate-900">{invoice.payment_method.stripe_email}</p>
+                {invoice.payment_method.stripe_fee_percentage && invoice.payment_method.show_fee_on_invoice === 1 && (
+                  <p className="text-[10px] text-slate-500 mt-1">{t('Taxa', 'Fee')}: {invoice.payment_method.stripe_fee_percentage}%</p>
                 )}
               </div>
             </div>

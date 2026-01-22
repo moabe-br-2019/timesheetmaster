@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS payment_methods (
   id TEXT PRIMARY KEY,                           -- UUID
   user_id INTEGER NOT NULL,                      -- Admin que criou
   name TEXT NOT NULL,                            -- Nome descritivo (ex: "PIX Principal", "Bank Transfer USD", "PayPal")
-  type TEXT NOT NULL CHECK(type IN ('pix', 'international', 'paypal')), -- Tipo de pagamento
+  type TEXT NOT NULL CHECK(type IN ('pix', 'international', 'paypal', 'stripe')), -- Tipo de pagamento
   currency TEXT NOT NULL,                        -- BRL para PIX, USD para internacional/PayPal
 
   -- Campos para PIX (Brasil)
@@ -33,6 +33,11 @@ CREATE TABLE IF NOT EXISTS payment_methods (
   -- Campos para PayPal
   paypal_email TEXT,                             -- Email PayPal
   paypal_fee_percentage REAL,                    -- Taxa em % (ex: 6.0 para 6%)
+
+  -- Campos para Stripe
+  stripe_email TEXT,                             -- Email da conta Stripe
+  stripe_fee_percentage REAL DEFAULT 6.0,        -- Taxa padrão 6%
+  show_fee_on_invoice INTEGER DEFAULT 1,         -- 1 = mostra taxa na invoice, 0 = não mostra
 
   -- Metadata
   is_default INTEGER DEFAULT 0,                  -- 1 se for forma de pagamento padrão

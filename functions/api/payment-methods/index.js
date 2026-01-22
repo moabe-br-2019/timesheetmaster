@@ -18,6 +18,7 @@ export async function onRequestGet(context) {
         intermediary_bank_address, intermediary_account_number,
         entity_type, entity_name, entity_tax_id,
         paypal_email, paypal_fee_percentage,
+        stripe_email, stripe_fee_percentage, show_fee_on_invoice,
         is_default, is_active, notes,
         created_at, updated_at
       FROM payment_methods
@@ -62,6 +63,9 @@ export async function onRequestPost(context) {
       entityTaxId,
       paypalEmail,
       paypalFeePercentage,
+      stripeEmail,
+      stripeFeePercentage,
+      showFeeOnInvoice,
       isDefault,
       notes
     } = body;
@@ -71,8 +75,8 @@ export async function onRequestPost(context) {
       return jsonResponse({ error: 'Nome, tipo e moeda são obrigatórios' }, 400);
     }
 
-    if (!['pix', 'international', 'paypal'].includes(type)) {
-      return jsonResponse({ error: 'Tipo deve ser "pix", "international" ou "paypal"' }, 400);
+    if (!['pix', 'international', 'paypal', 'stripe'].includes(type)) {
+      return jsonResponse({ error: 'Tipo deve ser "pix", "international", "paypal" ou "stripe"' }, 400);
     }
 
     if (type === 'pix' && currency !== 'BRL') {
@@ -87,6 +91,10 @@ export async function onRequestPost(context) {
       return jsonResponse({ error: 'PayPal deve usar USD' }, 400);
     }
 
+    if (type === 'stripe' && currency !== 'USD') {
+      return jsonResponse({ error: 'Stripe deve usar USD' }, 400);
+    }
+
     if (type === 'pix' && !pixKey) {
       return jsonResponse({ error: 'Chave PIX é obrigatória para pagamentos PIX' }, 400);
     }
@@ -97,6 +105,10 @@ export async function onRequestPost(context) {
 
     if (type === 'paypal' && !paypalEmail) {
       return jsonResponse({ error: 'Email PayPal é obrigatório' }, 400);
+    }
+
+    if (type === 'stripe' && !stripeEmail) {
+      return jsonResponse({ error: 'Email Stripe é obrigatório' }, 400);
     }
 
     const now = Math.floor(Date.now() / 1000);
@@ -122,8 +134,9 @@ export async function onRequestPost(context) {
         intermediary_bank_address, intermediary_account_number,
         entity_type, entity_name, entity_tax_id,
         paypal_email, paypal_fee_percentage,
+        stripe_email, stripe_fee_percentage, show_fee_on_invoice,
         is_default, is_active, notes, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       id,                                  // 1
       user.id,                             // 2
@@ -146,11 +159,14 @@ export async function onRequestPost(context) {
       entityTaxId || null,                 // 19
       paypalEmail || null,                 // 20
       paypalFeePercentage || null,         // 21
-      isDefault ? 1 : 0,                   // 22
-      1,                                   // 23 - is_active
-      notes || null,                       // 24
-      now,                                 // 25 - created_at
-      now                                  // 26 - updated_at
+      stripeEmail || null,                 // 22
+      stripeFeePercentage || 6.0,          // 23
+      showFeeOnInvoice !== undefined ? (showFeeOnInvoice ? 1 : 0) : 1, // 24
+      isDefault ? 1 : 0,                   // 25
+      1,                                   // 26 - is_active
+      notes || null,                       // 27
+      now,                                 // 28 - created_at
+      now                                  // 29 - updated_at
     ).run();
 
     return jsonResponse({

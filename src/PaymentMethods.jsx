@@ -36,7 +36,7 @@ const FormModal = ({ isOpen, onClose, onSubmit, isEdit, form, setForm, handleTyp
           {/* Tipo de Pagamento */}
           <div>
             <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest mb-3 block">Tipo de Pagamento *</label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => handleTypeChange('pix')}
@@ -77,6 +77,20 @@ const FormModal = ({ isOpen, onClose, onSubmit, isEdit, form, setForm, handleTyp
                 <div className="flex items-center justify-center gap-2">
                   <CreditCard size={18} />
                   PayPal (USD)
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTypeChange('stripe')}
+                className={`p-4 rounded-xl border-2 transition-all font-bold text-sm ${
+                  form.type === 'stripe'
+                    ? 'border-indigo-600 bg-indigo-600/20 text-white'
+                    : 'border-slate-800 bg-slate-950 text-slate-400 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <CreditCard size={18} />
+                  Stripe (USD)
                 </div>
               </button>
             </div>
@@ -250,6 +264,49 @@ const FormModal = ({ isOpen, onClose, onSubmit, isEdit, form, setForm, handleTyp
             </>
           )}
 
+          {/* Campos específicos para Stripe */}
+          {form.type === 'stripe' && (
+            <>
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest">Email Stripe *</label>
+                <input
+                  required
+                  type="email"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-2 outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium"
+                  placeholder="seu-email@stripe.com"
+                  value={form.stripeEmail}
+                  onChange={(e) => setForm({ ...form, stripeEmail: e.target.value })}
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest">Taxa Stripe (%)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-4 mt-2 outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium"
+                  placeholder="6.0"
+                  value={form.stripeFeePercentage}
+                  onChange={(e) => setForm({ ...form, stripeFeePercentage: e.target.value })}
+                />
+                <p className="text-xs text-slate-500 mt-2 ml-1">Taxa padrão do Stripe: 6%</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="showFeeOnInvoice"
+                  className="w-5 h-5 rounded bg-slate-950 border-slate-800 text-indigo-600 focus:ring-indigo-500/50 cursor-pointer"
+                  checked={form.showFeeOnInvoice}
+                  onChange={(e) => setForm({ ...form, showFeeOnInvoice: e.target.checked })}
+                />
+                <label htmlFor="showFeeOnInvoice" className="text-sm font-medium text-slate-300 cursor-pointer">
+                  Mostrar taxa na invoice
+                </label>
+              </div>
+            </>
+          )}
+
           {/* Dados da Entidade (PF/PJ) - Para todos os tipos */}
           <div className="border-t border-slate-800 pt-5">
             <h4 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Dados do Titular</h4>
@@ -376,6 +433,9 @@ const PaymentMethods = () => {
     entityTaxId: '',
     paypalEmail: '',
     paypalFeePercentage: 6.0,
+    stripeEmail: '',
+    stripeFeePercentage: 6.0,
+    showFeeOnInvoice: true,
     isDefault: false,
     notes: ''
   });
@@ -496,6 +556,9 @@ const PaymentMethods = () => {
       entityTaxId: method.entity_tax_id || '',
       paypalEmail: method.paypal_email || '',
       paypalFeePercentage: method.paypal_fee_percentage || 6.0,
+      stripeEmail: method.stripe_email || '',
+      stripeFeePercentage: method.stripe_fee_percentage || 6.0,
+      showFeeOnInvoice: method.show_fee_on_invoice === 1,
       isDefault: method.is_default === 1,
       notes: method.notes || ''
     });
@@ -523,6 +586,9 @@ const PaymentMethods = () => {
       entityTaxId: '',
       paypalEmail: '',
       paypalFeePercentage: 6.0,
+      stripeEmail: '',
+      stripeFeePercentage: 6.0,
+      showFeeOnInvoice: true,
       isDefault: false,
       notes: ''
     });
@@ -566,7 +632,7 @@ const PaymentMethods = () => {
           </div>
           <p className="text-slate-400 text-sm mb-1">
             Tipo: <span className="text-slate-300">
-              {method.type === 'pix' ? 'PIX' : method.type === 'paypal' ? 'PayPal' : 'Transferência Internacional'}
+              {method.type === 'pix' ? 'PIX' : method.type === 'paypal' ? 'PayPal' : method.type === 'stripe' ? 'Stripe' : 'Transferência Internacional'}
             </span>
           </p>
           <p className="text-slate-400 text-sm">
@@ -624,6 +690,31 @@ const PaymentMethods = () => {
               <p className="text-slate-400 text-xs">SWIFT: {method.intermediary_swift_code}</p>
               {method.intermediary_bank_name && <p className="text-slate-400 text-xs">{method.intermediary_bank_name}</p>}
             </div>
+          )}
+        </div>
+      )}
+
+      {method.type === 'paypal' && (
+        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+          <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">Email PayPal</p>
+          <p className="text-slate-300 font-mono text-sm">{method.paypal_email}</p>
+          {method.paypal_fee_percentage && (
+            <p className="text-slate-500 text-xs mt-1">Taxa: {method.paypal_fee_percentage}%</p>
+          )}
+        </div>
+      )}
+
+      {method.type === 'stripe' && (
+        <div className="bg-slate-950 p-4 rounded-xl border border-slate-800">
+          <p className="text-xs text-slate-500 uppercase tracking-widest mb-2">Email Stripe</p>
+          <p className="text-slate-300 font-mono text-sm">{method.stripe_email}</p>
+          {method.stripe_fee_percentage && (
+            <p className="text-slate-500 text-xs mt-1">Taxa: {method.stripe_fee_percentage}%</p>
+          )}
+          {method.show_fee_on_invoice !== undefined && (
+            <p className="text-slate-500 text-xs mt-1">
+              Mostrar taxa na invoice: {method.show_fee_on_invoice === 1 ? 'Sim' : 'Não'}
+            </p>
           )}
         </div>
       )}

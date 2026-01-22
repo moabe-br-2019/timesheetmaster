@@ -20,6 +20,7 @@ export async function onRequestGet(context) {
         intermediary_bank_address, intermediary_account_number,
         entity_type, entity_name, entity_tax_id,
         paypal_email, paypal_fee_percentage,
+        stripe_email, stripe_fee_percentage, show_fee_on_invoice,
         is_default, is_active, notes,
         created_at, updated_at
       FROM payment_methods
@@ -67,6 +68,9 @@ export async function onRequestPatch(context) {
       entityTaxId,
       paypalEmail,
       paypalFeePercentage,
+      stripeEmail,
+      stripeFeePercentage,
+      showFeeOnInvoice,
       isDefault,
       isActive,
       notes
@@ -113,6 +117,9 @@ export async function onRequestPatch(context) {
         entity_tax_id = COALESCE(?, entity_tax_id),
         paypal_email = COALESCE(?, paypal_email),
         paypal_fee_percentage = COALESCE(?, paypal_fee_percentage),
+        stripe_email = COALESCE(?, stripe_email),
+        stripe_fee_percentage = COALESCE(?, stripe_fee_percentage),
+        show_fee_on_invoice = COALESCE(?, show_fee_on_invoice),
         is_default = COALESCE(?, is_default),
         is_active = COALESCE(?, is_active),
         notes = COALESCE(?, notes),
@@ -136,6 +143,9 @@ export async function onRequestPatch(context) {
       entityTaxId !== undefined ? entityTaxId : null,
       paypalEmail !== undefined ? paypalEmail : null,
       paypalFeePercentage !== undefined ? paypalFeePercentage : null,
+      stripeEmail !== undefined ? stripeEmail : null,
+      stripeFeePercentage !== undefined ? stripeFeePercentage : null,
+      showFeeOnInvoice !== undefined ? (showFeeOnInvoice ? 1 : 0) : null,
       isDefault !== undefined ? (isDefault ? 1 : 0) : null,
       isActive !== undefined ? (isActive ? 1 : 0) : null,
       notes !== undefined ? notes : null,
