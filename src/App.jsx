@@ -31,6 +31,7 @@ import Users from './Users';
 import Invoices from './Invoices';
 import PaymentMethods from './PaymentMethods';
 import InvoicePrint from './InvoicePrint';
+import CompanySettings from './CompanySettings';
 import { Users as UsersIcon } from 'lucide-react';
 
 const App = () => {
@@ -688,6 +689,12 @@ const App = () => {
                     <CreditCard size={18} /> <span className="text-sm font-semibold hidden sm:inline">Pagamentos</span>
                   </button>
                   <button
+                    onClick={() => setView('company-settings')}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'company-settings' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                  >
+                    <Settings size={18} /> <span className="text-sm font-semibold hidden sm:inline">Configurações</span>
+                  </button>
+                  <button
                     onClick={() => setView('users')}
                     className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'users' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
                   >
@@ -719,8 +726,10 @@ const App = () => {
       </nav>
 
       <main className="max-w-6xl mx-auto p-4 md:p-8">
-        
-        {view === 'users' && isAdmin ? (
+
+        {view === 'company-settings' && isAdmin ? (
+          <CompanySettings />
+        ) : view === 'users' && isAdmin ? (
           <Users projects={projetos} />
         ) : view === 'invoices' && isAdmin ? (
           <Invoices projects={projetos} clients={clients} />

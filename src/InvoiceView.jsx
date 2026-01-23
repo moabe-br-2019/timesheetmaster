@@ -188,7 +188,7 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
             </div>
 
             {/* Botão Editar */}
-            {invoice.status !== 'paid' && (
+            {(!invoice.status || invoice.status !== 'paid') && (
               <button
                 onClick={handleOpenEditModal}
                 className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-all text-sm"
@@ -198,7 +198,7 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
             )}
 
             {/* Botão Marcar como Paga */}
-            {invoice.status !== 'paid' && (
+            {(!invoice.status || invoice.status !== 'paid') && (
               <button
                 onClick={handleMarkAsPaid}
                 className="ml-auto flex items-center gap-2 bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg font-bold transition-all text-sm"
