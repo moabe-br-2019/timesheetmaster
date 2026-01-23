@@ -499,50 +499,52 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
       {/* Estilos para impressão */}
       {/* Modal de Edição */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
-            <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">{t('Editar Invoice', 'Edit Invoice')}</h2>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-[2rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-8 overflow-y-auto">
+              <h2 className="text-2xl font-black mb-6 text-white flex items-center gap-3">
+                ✏️ {t('Editar Invoice', 'Edit Invoice')}
+              </h2>
 
               {/* Data de Emissão */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
+              <div className="mb-5">
+                <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest block mb-2">
                   {t('Data de Emissão', 'Issue Date')}
                 </label>
                 <input
                   type="date"
                   value={editFormData.issueDate}
                   onChange={(e) => setEditFormData({ ...editFormData, issueDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-indigo-500/50 font-mono font-bold text-slate-200"
                 />
               </div>
 
               {/* Data de Vencimento */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
+              <div className="mb-5">
+                <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest block mb-2">
                   {t('Data de Vencimento', 'Due Date')}
                 </label>
                 <input
                   type="date"
                   value={editFormData.dueDate}
                   onChange={(e) => setEditFormData({ ...editFormData, dueDate: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-indigo-500/50 font-mono font-bold text-slate-200"
                 />
               </div>
 
               {/* Payment Method */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
+              <div className="mb-5">
+                <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest block mb-2">
                   {t('Meio de Pagamento', 'Payment Method')}
                 </label>
                 <select
                   value={editFormData.paymentMethodId}
                   onChange={(e) => setEditFormData({ ...editFormData, paymentMethodId: e.target.value })}
-                  className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-indigo-500/50 appearance-none cursor-pointer font-medium text-slate-200"
                 >
-                  <option value="">{t('Selecione...', 'Select...')}</option>
+                  <option value="" className="bg-slate-900 text-slate-300">{t('Selecione...', 'Select...')}</option>
                   {paymentMethods.map(pm => (
-                    <option key={pm.id} value={pm.id}>
+                    <option key={pm.id} value={pm.id} className="bg-slate-900 text-slate-300">
                       {pm.name} ({pm.type.toUpperCase()})
                     </option>
                   ))}
@@ -551,8 +553,8 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
 
               {/* Link Stripe (só se payment method selecionado for Stripe) */}
               {paymentMethods.find(pm => pm.id === editFormData.paymentMethodId)?.type === 'stripe' && (
-                <div className="mb-4">
-                  <label className="block text-sm font-medium mb-1">
+                <div className="mb-5">
+                  <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest block mb-2">
                     {t('Link de Pagamento Stripe', 'Stripe Payment Link')}
                   </label>
                   <input
@@ -560,38 +562,39 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
                     value={editFormData.stripePaymentLink}
                     onChange={(e) => setEditFormData({ ...editFormData, stripePaymentLink: e.target.value })}
                     placeholder="https://buy.stripe.com/..."
-                    className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium text-slate-200 placeholder:text-slate-700"
                   />
-                  <p className="text-xs text-slate-500 mt-1">
+                  <p className="text-xs text-slate-500 mt-2 ml-1">
                     {t('Cole o link de pagamento gerado no Stripe Dashboard', 'Paste the payment link generated in Stripe Dashboard')}
                   </p>
                 </div>
               )}
 
               {/* Notas */}
-              <div className="mb-4">
-                <label className="block text-sm font-medium mb-1">
+              <div className="mb-6">
+                <label className="text-[10px] font-black text-slate-500 uppercase ml-1 tracking-widest block mb-2">
                   {t('Observações', 'Notes')}
                 </label>
                 <textarea
                   value={editFormData.notes}
                   onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  className="w-full bg-slate-950 border border-slate-800 rounded-xl px-5 py-4 outline-none focus:ring-2 focus:ring-indigo-500/50 font-medium text-slate-200 resize-none placeholder:text-slate-700"
+                  placeholder={t('Adicione observações aqui...', 'Add notes here...')}
                 />
               </div>
 
               {/* Botões */}
-              <div className="flex justify-end gap-2">
+              <div className="flex gap-3">
                 <button
                   onClick={() => setIsEditModalOpen(false)}
-                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded text-sm font-medium transition-colors"
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-bold py-4 rounded-xl transition-all active:scale-95"
                 >
                   {t('Cancelar', 'Cancel')}
                 </button>
                 <button
                   onClick={handleEditSubmit}
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors"
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition-all active:scale-95 shadow-lg shadow-indigo-900/40"
                 >
                   {t('Salvar', 'Save')}
                 </button>

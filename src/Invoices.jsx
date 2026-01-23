@@ -84,13 +84,21 @@ const Invoices = ({ projects, clients }) => {
     }
 
     // Avisar se company settings não estiverem configuradas
-    if (!companySettings || !companySettings.name) {
-      if (!confirm('⚠️ Company Settings não estão configuradas. O campo "DE:" na invoice ficará vazio.\n\nConfigure em Settings → Company para adicionar nome, endereço e CNPJ da sua empresa.\n\nDeseja criar a invoice mesmo assim?')) {
+    if (!companySettings || !companySettings.companyName) {
+      if (!confirm('⚠️ Company Settings não estão configuradas. O campo "DE:" na invoice ficará vazio.\n\nConfigure em Configurações para adicionar nome, endereço e CNPJ da sua empresa.\n\nDeseja criar a invoice mesmo assim?')) {
         return;
       }
     }
 
     const clientData = clients.find(c => c.id === parseInt(form.clientId));
+
+    // Mapear company settings para o formato que a API espera
+    const companyInfo = companySettings ? {
+      name: companySettings.companyName,
+      address: companySettings.companyAddress,
+      taxId: companySettings.companyTaxId,
+      bankInfo: companySettings.companyBankInfo
+    } : null;
 
     try {
       const res = await fetch('/api/invoices', {
@@ -104,7 +112,7 @@ const Invoices = ({ projects, clients }) => {
           issueDate: form.issueDate,
           dueDate: form.dueDate || null,
           paymentMethodId: form.paymentMethodId || null,
-          companyInfo: companySettings,
+          companyInfo: companyInfo,
           clientInfo: clientData ? {
             name: clientData.email,
             email: clientData.email
