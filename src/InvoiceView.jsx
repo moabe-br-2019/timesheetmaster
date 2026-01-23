@@ -198,15 +198,23 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
           </div>
 
           {/* Tabela de Itens */}
-          <table className="w-full mb-6 border-collapse">
+          <table className="w-full mb-6 border-collapse table-fixed">
+            <colgroup>
+              <col style={{ width: '8%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '35%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '16%' }} />
+              <col style={{ width: '16%' }} />
+            </colgroup>
             <thead>
               <tr className="border-b-2 border-slate-300">
-                <th className="text-left py-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Data', 'Date')}</th>
-                <th className="text-left py-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Projeto', 'Project')}</th>
-                <th className="text-left py-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Atividade', 'Activity')}</th>
-                <th className="text-right py-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Horas', 'Hours')}</th>
-                <th className="text-right py-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Valor/h', 'Rate/h')}</th>
-                <th className="text-right py-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Subtotal', 'Subtotal')}</th>
+                <th className="text-left py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Data', 'Date')}</th>
+                <th className="text-left py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Projeto', 'Project')}</th>
+                <th className="text-left py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Atividade', 'Activity')}</th>
+                <th className="text-right py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Horas', 'Hours')}</th>
+                <th className="text-right py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Valor/h', 'Rate/h')}</th>
+                <th className="text-right py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Subtotal', 'Subtotal')}</th>
               </tr>
             </thead>
             <tbody>
@@ -214,17 +222,17 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
                 const subtotal = Number(item.horas) * Number(item.valor_hora_na_epoca);
                 return (
                   <tr key={item.id} className="border-b border-slate-200">
-                    <td className="py-2 text-xs text-slate-700">{formatDateLocal(item.data)}</td>
-                    <td className="py-2 text-xs text-slate-900 font-medium">{item.projeto_nome}</td>
-                    <td className="py-2 text-xs text-slate-700">
-                      <div>{item.atividade}</div>
+                    <td className="py-2 px-1 text-xs text-slate-700">{formatDateLocal(item.data)}</td>
+                    <td className="py-2 px-1 text-xs text-slate-900 font-medium">{item.projeto_nome}</td>
+                    <td className="py-2 px-1 text-xs text-slate-700">
+                      <div className="break-words">{item.atividade}</div>
                       {showDescription && item.descricao && (
-                        <div className="text-[10px] text-slate-500 mt-1 leading-tight">{item.descricao}</div>
+                        <div className="text-[10px] text-slate-500 mt-1 leading-tight break-words">{item.descricao}</div>
                       )}
                     </td>
-                    <td className="py-2 text-xs text-right font-mono">{item.horas}h</td>
-                    <td className="py-2 text-xs text-right font-mono">{getSimboloMoeda(invoice.currency)} {Number(item.valor_hora_na_epoca).toFixed(2)}</td>
-                    <td className="py-2 text-xs text-right font-mono font-bold">{getSimboloMoeda(invoice.currency)} {subtotal.toFixed(2)}</td>
+                    <td className="py-2 px-1 text-xs text-right font-mono whitespace-nowrap">{item.horas}h</td>
+                    <td className="py-2 px-1 text-xs text-right font-mono whitespace-nowrap">{getSimboloMoeda(invoice.currency)} {Number(item.valor_hora_na_epoca).toFixed(2)}</td>
+                    <td className="py-2 px-1 text-xs text-right font-mono font-bold whitespace-nowrap">{getSimboloMoeda(invoice.currency)} {subtotal.toFixed(2)}</td>
                   </tr>
                 );
               })}
