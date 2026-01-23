@@ -65,7 +65,7 @@ export async function onRequestPatch(context) {
 
   try {
     const body = await context.request.json();
-    const { status, notes, dueDate } = body;
+    const { status, notes, dueDate, issueDate, paymentMethodId, stripePaymentLink } = body;
 
     // Verificar se invoice existe e pertence ao usuário
     const { results: invoices } = await context.env.DB.prepare(`
@@ -76,9 +76,50 @@ export async function onRequestPatch(context) {
       return jsonResponse({ error: 'Invoice not found' }, 404);
     }
 
-    // Não permitir editar invoice paga (exceto notas)
-    if (invoices[0].status === 'paid' && status && status !== 'paid') {
-      return jsonResponse({ error: 'Não é possível alterar status de invoice já paga' }, 400);
+    // Não permitir editar campos críticos se invoice está paga (exceto notes e stripePaymentLink)
+    if (invoices[0].status === 'paid') {
+      if (status && status !== 'paid') {
+        return jsonResponse({ error: 'Não é possível alterar status de invoice já paga' }, 400);
+      }
+      if (issueDate || dueDate || paymentMethodId) {
+        return jsonResponse({
+          error: 'Não é possível alterar datas ou payment method de invoice paga'
+        }, 400);
+      }
+    }
+
+    // Validar datas se fornecidas
+    if (issueDate && !/^\d{4}-\d{2}-\d{2}$/.test(issueDate)) {
+      return jsonResponse({ error: 'Data de emissão inválida (formato: YYYY-MM-DD)' }, 400);
+    }
+
+    if (dueDate && !/^\d{4}-\d{2}-\d{2}$/.test(dueDate)) {
+      return jsonResponse({ error: 'Data de vencimento inválida (formato: YYYY-MM-DD)' }, 400);
+    }
+
+    // Validar payment method se fornecido
+    if (paymentMethodId) {
+      const { results: pmResults } = await context.env.DB.prepare(`
+        SELECT id FROM payment_methods WHERE id = ? AND user_id = ?
+      `).bind(paymentMethodId, user.id).all();
+
+      if (pmResults.length === 0) {
+        return jsonResponse({ error: 'Payment method não encontrado' }, 404);
+      }
+    }
+
+    // Validar link Stripe se fornecido
+    if (stripePaymentLink && stripePaymentLink !== '') {
+      try {
+        const url = new URL(stripePaymentLink);
+        if (!url.hostname.includes('stripe.com')) {
+          return jsonResponse({
+            error: 'Link Stripe deve ser um URL do domínio stripe.com'
+          }, 400);
+        }
+      } catch {
+        return jsonResponse({ error: 'Link Stripe inválido (deve ser uma URL válida)' }, 400);
+      }
     }
 
     // Montar query dinâmica
@@ -96,6 +137,18 @@ export async function onRequestPatch(context) {
     if (dueDate !== undefined) {
       updates.push('due_date = ?');
       values.push(dueDate);
+    }
+    if (issueDate !== undefined) {
+      updates.push('issue_date = ?');
+      values.push(issueDate);
+    }
+    if (paymentMethodId !== undefined) {
+      updates.push('payment_method_id = ?');
+      values.push(paymentMethodId);
+    }
+    if (stripePaymentLink !== undefined) {
+      updates.push('stripe_payment_link = ?');
+      values.push(stripePaymentLink || null); // Permitir limpar o campo enviando string vazia
     }
 
     updates.push('updated_at = ?');

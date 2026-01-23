@@ -11,6 +11,15 @@ const formatDateLocal = (dateString) => {
 const InvoiceView = ({ invoice, onClose, onRefresh }) => {
   const [showDescription, setShowDescription] = useState(false);
   const [language, setLanguage] = useState('pt'); // 'pt' ou 'en'
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    issueDate: '',
+    dueDate: '',
+    paymentMethodId: '',
+    stripePaymentLink: '',
+    notes: ''
+  });
+  const [paymentMethods, setPaymentMethods] = useState([]);
 
   const getSimboloMoeda = (code) => {
     const symbols = { BRL: 'R$', USD: 'US$', EUR: '€', GBP: '£' };
@@ -45,6 +54,66 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
       onClose();
     } catch (err) {
       alert('Erro ao marcar invoice como paga: ' + err.message);
+    }
+  };
+
+  const fetchPaymentMethods = async () => {
+    try {
+      const response = await fetch('/api/payment-methods', {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPaymentMethods(data);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar payment methods:', err);
+    }
+  };
+
+  const handleOpenEditModal = () => {
+    setEditFormData({
+      issueDate: invoice.issue_date || '',
+      dueDate: invoice.due_date || '',
+      paymentMethodId: invoice.payment_method_id || '',
+      stripePaymentLink: invoice.stripe_payment_link || '',
+      notes: invoice.notes || ''
+    });
+    fetchPaymentMethods();
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditSubmit = async () => {
+    try {
+      const response = await fetch(`/api/invoices/${invoice.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({
+          issueDate: editFormData.issueDate,
+          dueDate: editFormData.dueDate,
+          paymentMethodId: editFormData.paymentMethodId,
+          stripePaymentLink: editFormData.stripePaymentLink,
+          notes: editFormData.notes
+        })
+      });
+
+      if (response.ok) {
+        alert('Invoice atualizada com sucesso!');
+        setIsEditModalOpen(false);
+        if (onRefresh) onRefresh(); // Recarregar invoice
+      } else {
+        const error = await response.json();
+        alert(`Erro: ${error.error}`);
+      }
+    } catch (err) {
+      console.error('Erro ao atualizar invoice:', err);
+      alert('Erro ao atualizar invoice: ' + err.message);
     }
   };
 
@@ -117,6 +186,16 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
                 EN
               </button>
             </div>
+
+            {/* Botão Editar */}
+            {invoice.status !== 'paid' && (
+              <button
+                onClick={handleOpenEditModal}
+                className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold transition-all text-sm"
+              >
+                ✏️ Editar
+              </button>
+            )}
 
             {/* Botão Marcar como Paga */}
             {invoice.status !== 'paid' && (
@@ -200,21 +279,21 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
           {/* Tabela de Itens */}
           <table className="w-full mb-6 border-collapse table-fixed">
             <colgroup>
-              <col style={{ width: '8%' }} />
-              <col style={{ width: '15%' }} />
-              <col style={{ width: '35%' }} />
               <col style={{ width: '10%' }} />
-              <col style={{ width: '16%' }} />
-              <col style={{ width: '16%' }} />
+              <col style={{ width: '18%' }} />
+              <col style={{ width: '32%' }} />
+              <col style={{ width: '10%' }} />
+              <col style={{ width: '15%' }} />
+              <col style={{ width: '15%' }} />
             </colgroup>
             <thead>
               <tr className="border-b-2 border-slate-300">
-                <th className="text-left py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Data', 'Date')}</th>
-                <th className="text-left py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Projeto', 'Project')}</th>
-                <th className="text-left py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Atividade', 'Activity')}</th>
-                <th className="text-right py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Horas', 'Hours')}</th>
-                <th className="text-right py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Valor/h', 'Rate/h')}</th>
-                <th className="text-right py-2 px-1 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Subtotal', 'Subtotal')}</th>
+                <th className="text-left py-2 px-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Data', 'Date')}</th>
+                <th className="text-left py-2 px-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Projeto', 'Project')}</th>
+                <th className="text-left py-2 px-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Atividade', 'Activity')}</th>
+                <th className="text-right py-2 px-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Horas', 'Hours')}</th>
+                <th className="text-right py-2 px-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Valor/h', 'Rate/h')}</th>
+                <th className="text-right py-2 px-2 text-[10px] font-black text-slate-600 uppercase tracking-widest">{t('Subtotal', 'Subtotal')}</th>
               </tr>
             </thead>
             <tbody>
@@ -222,17 +301,17 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
                 const subtotal = Number(item.horas) * Number(item.valor_hora_na_epoca);
                 return (
                   <tr key={item.id} className="border-b border-slate-200">
-                    <td className="py-2 px-1 text-xs text-slate-700">{formatDateLocal(item.data)}</td>
-                    <td className="py-2 px-1 text-xs text-slate-900 font-medium">{item.projeto_nome}</td>
-                    <td className="py-2 px-1 text-xs text-slate-700">
+                    <td className="py-2 px-2 text-xs text-slate-700">{formatDateLocal(item.data)}</td>
+                    <td className="py-2 px-2 text-xs text-slate-900 font-medium">{item.projeto_nome}</td>
+                    <td className="py-2 px-2 text-xs text-slate-700">
                       <div className="break-words">{item.atividade}</div>
                       {showDescription && item.descricao && (
                         <div className="text-[10px] text-slate-500 mt-1 leading-tight break-words">{item.descricao}</div>
                       )}
                     </td>
-                    <td className="py-2 px-1 text-xs text-right font-mono whitespace-nowrap">{item.horas}h</td>
-                    <td className="py-2 px-1 text-xs text-right font-mono whitespace-nowrap">{getSimboloMoeda(invoice.currency)} {Number(item.valor_hora_na_epoca).toFixed(2)}</td>
-                    <td className="py-2 px-1 text-xs text-right font-mono font-bold whitespace-nowrap">{getSimboloMoeda(invoice.currency)} {subtotal.toFixed(2)}</td>
+                    <td className="py-2 px-2 text-xs text-right font-mono whitespace-nowrap">{item.horas}h</td>
+                    <td className="py-2 px-2 text-xs text-right font-mono whitespace-nowrap">{getSimboloMoeda(invoice.currency)} {Number(item.valor_hora_na_epoca).toFixed(2)}</td>
+                    <td className="py-2 px-2 text-xs text-right font-mono font-bold whitespace-nowrap">{getSimboloMoeda(invoice.currency)} {subtotal.toFixed(2)}</td>
                   </tr>
                 );
               })}
@@ -365,6 +444,30 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
                       <p className="text-[10px] text-slate-500 mt-1">{t('Taxa', 'Fee')}: {invoice.payment_method.stripe_fee_percentage}%</p>
                     )}
                   </div>
+
+                  {/* Link de pagamento Stripe */}
+                  {invoice.stripe_payment_link && (
+                    <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                      <p className="text-[10px] text-blue-600 uppercase tracking-widest mb-2">{t('Link de Pagamento', 'Payment Link')}</p>
+                      <a
+                        href={invoice.stripe_payment_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-blue-600 hover:text-blue-800 underline break-all block mb-2"
+                      >
+                        {invoice.stripe_payment_link}
+                      </a>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(invoice.stripe_payment_link);
+                          alert(t('Link copiado!', 'Link copied!'));
+                        }}
+                        className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                      >
+                        📋 {t('Copiar Link', 'Copy Link')}
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : null}
             </div>
@@ -394,6 +497,110 @@ const InvoiceView = ({ invoice, onClose, onRefresh }) => {
       </div>
 
       {/* Estilos para impressão */}
+      {/* Modal de Edição */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto m-4">
+            <div className="p-6">
+              <h2 className="text-xl font-bold mb-4">{t('Editar Invoice', 'Edit Invoice')}</h2>
+
+              {/* Data de Emissão */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  {t('Data de Emissão', 'Issue Date')}
+                </label>
+                <input
+                  type="date"
+                  value={editFormData.issueDate}
+                  onChange={(e) => setEditFormData({ ...editFormData, issueDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Data de Vencimento */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  {t('Data de Vencimento', 'Due Date')}
+                </label>
+                <input
+                  type="date"
+                  value={editFormData.dueDate}
+                  onChange={(e) => setEditFormData({ ...editFormData, dueDate: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Payment Method */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  {t('Meio de Pagamento', 'Payment Method')}
+                </label>
+                <select
+                  value={editFormData.paymentMethodId}
+                  onChange={(e) => setEditFormData({ ...editFormData, paymentMethodId: e.target.value })}
+                  className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                >
+                  <option value="">{t('Selecione...', 'Select...')}</option>
+                  {paymentMethods.map(pm => (
+                    <option key={pm.id} value={pm.id}>
+                      {pm.name} ({pm.type.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Link Stripe (só se payment method selecionado for Stripe) */}
+              {paymentMethods.find(pm => pm.id === editFormData.paymentMethodId)?.type === 'stripe' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-1">
+                    {t('Link de Pagamento Stripe', 'Stripe Payment Link')}
+                  </label>
+                  <input
+                    type="url"
+                    value={editFormData.stripePaymentLink}
+                    onChange={(e) => setEditFormData({ ...editFormData, stripePaymentLink: e.target.value })}
+                    placeholder="https://buy.stripe.com/..."
+                    className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    {t('Cole o link de pagamento gerado no Stripe Dashboard', 'Paste the payment link generated in Stripe Dashboard')}
+                  </p>
+                </div>
+              )}
+
+              {/* Notas */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  {t('Observações', 'Notes')}
+                </label>
+                <textarea
+                  value={editFormData.notes}
+                  onChange={(e) => setEditFormData({ ...editFormData, notes: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+
+              {/* Botões */}
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded text-sm font-medium transition-colors"
+                >
+                  {t('Cancelar', 'Cancel')}
+                </button>
+                <button
+                  onClick={handleEditSubmit}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded text-sm font-medium transition-colors"
+                >
+                  {t('Salvar', 'Save')}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <style>{`
         @media print {
           /* Ocultar todos os elementos exceto o conteúdo da invoice */

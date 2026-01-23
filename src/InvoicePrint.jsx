@@ -104,12 +104,12 @@ const InvoicePrint = ({ invoice, language = 'pt', showDescription = false }) => 
         <h3 className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-3">{t('Itens', 'Items')}</h3>
         <table className="w-full border-collapse table-fixed">
           <colgroup>
-            <col style={{ width: '8%' }} />
-            <col style={{ width: '15%' }} />
-            <col style={{ width: '35%' }} />
             <col style={{ width: '10%' }} />
-            <col style={{ width: '16%' }} />
-            <col style={{ width: '16%' }} />
+            <col style={{ width: '18%' }} />
+            <col style={{ width: '32%' }} />
+            <col style={{ width: '10%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '15%' }} />
           </colgroup>
           <thead>
             <tr className="bg-slate-100 border-b-2 border-slate-300">
@@ -271,6 +271,21 @@ const InvoicePrint = ({ invoice, language = 'pt', showDescription = false }) => 
                   <p className="text-[10px] text-slate-500 mt-1">{t('Taxa', 'Fee')}: {invoice.payment_method.stripe_fee_percentage}%</p>
                 )}
               </div>
+
+              {/* Link de pagamento Stripe */}
+              {invoice.stripe_payment_link && (
+                <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                  <p className="text-[10px] text-blue-600 uppercase tracking-widest mb-2">{t('Link de Pagamento', 'Payment Link')}</p>
+                  <a
+                    href={invoice.stripe_payment_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-600 underline break-all block"
+                  >
+                    {invoice.stripe_payment_link}
+                  </a>
+                </div>
+              )}
             </div>
           ) : null}
         </div>

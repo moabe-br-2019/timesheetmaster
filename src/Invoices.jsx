@@ -83,6 +83,13 @@ const Invoices = ({ projects, clients }) => {
       return;
     }
 
+    // Avisar se company settings não estiverem configuradas
+    if (!companySettings || !companySettings.name) {
+      if (!confirm('⚠️ Company Settings não estão configuradas. O campo "DE:" na invoice ficará vazio.\n\nConfigure em Settings → Company para adicionar nome, endereço e CNPJ da sua empresa.\n\nDeseja criar a invoice mesmo assim?')) {
+        return;
+      }
+    }
+
     const clientData = clients.find(c => c.id === parseInt(form.clientId));
 
     try {
