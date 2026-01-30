@@ -1,8 +1,9 @@
-name = "timesheet-app"
+name = "timesheet-app-dev"  # MUDANÇA: sufixo -dev
+account_id = "41ebddedab3094544c4601e78c181c6e"  # Account ID para Cloudflare
 compatibility_date = "2024-01-01"
 pages_build_output_dir = "dist"
 
 [[d1_databases]]
 binding = "DB" # Available in your Functions as env.DB
-database_name = "timesheet-db"
-database_id = "a3e36c1e-84b3-463c-acb6-bfdc89e35260"
+database_name = "timesheet-db-dev"  # MUDANÇA: database de desenvolvimento
+database_id = "22e6812e-f99b-4397-9656-74fcb848b336"  # Database de desenvolvimento criado

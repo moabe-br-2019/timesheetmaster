@@ -1,13 +1,13 @@
 {
-  "name": "timesheet-app",
+  "name": "timesheet-app-dev",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:frontend": "vite",
-    "dev:backend": "wrangler pages dev . --port 8788",
-    "db:setup": "wrangler d1 execute timesheet-db --local --file=schema.sql",
+    "dev:backend": "wrangler pages dev . --port 8789",
+    "db:setup": "wrangler d1 execute timesheet-db-dev --local --file=schema.sql",
     "db:seed:local": "node scripts/seed-admin-local.js",
     "db:create": "wrangler d1 create timesheet-db",
     "db:migrate": "wrangler d1 execute timesheet-db --remote --file=schema.sql",
