@@ -24,7 +24,13 @@ import {
   Key,
   Edit,
   FileText,
-  CreditCard
+  CreditCard,
+  Bell,
+  Menu,
+  Search,
+  ExternalLink,
+  Edit3,
+  MoreVertical
 } from 'lucide-react';
 import Login from './Login';
 import Users from './Users';
@@ -33,6 +39,8 @@ import PaymentMethods from './PaymentMethods';
 import InvoicePrint from './InvoicePrint';
 import CompanySettings from './CompanySettings';
 import { Users as UsersIcon } from 'lucide-react';
+import StatusBadge from './components/StatusBadge';
+import StatCard from './components/StatCard';
 
 const App = () => {
   // Verificar se estamos em modo de impressão
@@ -649,83 +657,113 @@ const App = () => {
     return <Login onLogin={handleLogin} />;
   }
 
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    ...(isAdmin ? [
+      { id: 'settings', label: 'Projetos', icon: Briefcase },
+      { id: 'invoices', label: 'Invoices', icon: FileText },
+      { id: 'payments', label: 'Pagamentos', icon: CreditCard },
+      { id: 'company-settings', label: 'Configurações', icon: Settings },
+      { id: 'users', label: 'Clientes', icon: UsersIcon },
+    ] : [])
+  ];
+
   return (
-    <div className="min-h-screen bg-[#0f172a] text-slate-200 font-sans pb-20 selection:bg-indigo-500/30">
-      {/* Navbar Superior */}
-      <nav className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-9 h-9 bg-indigo-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-indigo-900/40">T</div>
-            <span className="font-bold text-xl tracking-tight hidden sm:block">Timesheet<span className="text-indigo-500 font-black">Master</span></span>
+    <div className="min-h-screen bg-[#05080d] text-slate-200 flex font-sans selection:bg-indigo-500/30">
+
+      {/* SIDEBAR */}
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 bg-[#0a0f18] border-r border-slate-800/50 transform transition-transform duration-300 ease-in-out ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0`}>
+        <div className="flex flex-col h-full p-6">
+          {/* Logo */}
+          <div className="flex items-center gap-3 px-2 mb-10">
+            <div className="w-10 h-10 bg-gradient-to-tr from-indigo-600 to-violet-500 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+              <Clock className="text-white" size={24} />
+            </div>
+            <span className="text-xl font-black tracking-tighter text-white uppercase">TimeMaster</span>
           </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="flex bg-slate-950 p-1 rounded-2xl border border-slate-800">
-              <button 
-                onClick={() => setView('dashboard')}
-                className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'dashboard' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-              >
-                <LayoutDashboard size={18} /> <span className="text-sm font-semibold hidden sm:inline">Dashboard</span>
-              </button>
-              
-              {isAdmin && (
-                <>
-                  <button
-                    onClick={() => setView('settings')}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'settings' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-                  >
-                    <Briefcase size={18} /> <span className="text-sm font-semibold hidden sm:inline">Meus Projetos</span>
-                  </button>
-                  <button
-                    onClick={() => setView('invoices')}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'invoices' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-                  >
-                    <FileText size={18} /> <span className="text-sm font-semibold hidden sm:inline">Invoices</span>
-                  </button>
-                  <button
-                    onClick={() => setView('payments')}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'payments' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-                  >
-                    <CreditCard size={18} /> <span className="text-sm font-semibold hidden sm:inline">Pagamentos</span>
-                  </button>
-                  <button
-                    onClick={() => setView('company-settings')}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'company-settings' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-                  >
-                    <Settings size={18} /> <span className="text-sm font-semibold hidden sm:inline">Configurações</span>
-                  </button>
-                  <button
-                    onClick={() => setView('users')}
-                    className={`flex items-center gap-2 px-5 py-2 rounded-xl transition-all duration-200 ${view === 'users' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
-                  >
-                    <UsersIcon size={18} /> <span className="text-sm font-semibold hidden sm:inline">Clientes</span>
-                  </button>
-                </>
-              )}
-            </div>
 
-            <div className="flex items-center gap-2">
+          {/* Navigation */}
+          <nav className="flex-1 space-y-2">
+            {menuItems.map((item) => (
               <button
-                onClick={() => setIsProfileModalOpen(true)}
-                className="p-3 text-slate-500 hover:text-indigo-400 hover:bg-indigo-400/10 rounded-xl transition-all"
-                title="Perfil"
+                key={item.id}
+                onClick={() => setView(item.id)}
+                className={`w-full flex items-center gap-4 px-4 py-4 rounded-2xl transition-all group ${
+                  view === item.id
+                    ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20'
+                    : 'text-slate-500 hover:bg-slate-800/50 hover:text-slate-200'
+                }`}
               >
-                <User size={20} />
+                <item.icon size={22} className={view === item.id ? 'text-white' : 'group-hover:text-indigo-400'} />
+                <span className="font-bold text-sm tracking-wide uppercase">{item.label}</span>
+                {view === item.id && <ChevronRight size={16} className="ml-auto opacity-50" />}
               </button>
+            ))}
+          </nav>
 
-              <button
-                onClick={openLogoutConfirm}
-                className="p-3 text-slate-500 hover:text-red-400 hover:bg-red-400/10 rounded-xl transition-all"
-                title="Sair"
-              >
-                <LogOut size={20} />
-              </button>
+          {/* User & Logout */}
+          <div className="mt-auto pt-6 border-t border-slate-800/50">
+            <div className="flex items-center gap-3 p-2 mb-4">
+              <div className="w-10 h-10 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center overflow-hidden">
+                <User size={20} className="text-slate-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-bold text-white truncate">{user?.name || user?.email}</p>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isAdmin ? 'Admin' : 'Cliente'}</p>
+              </div>
             </div>
+            <button
+              onClick={openLogoutConfirm}
+              className="w-full flex items-center gap-4 px-4 py-4 rounded-2xl text-slate-500 hover:bg-rose-500/10 hover:text-rose-500 transition-all group"
+            >
+              <LogOut size={22} />
+              <span className="font-bold text-sm tracking-wide uppercase">Sair</span>
+            </button>
           </div>
         </div>
-      </nav>
+      </aside>
 
-      <main className="max-w-6xl mx-auto p-4 md:p-8">
+      {/* MAIN CONTENT */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+        {/* HEADER */}
+        <header className="h-20 flex items-center justify-between px-8 bg-[#05080d]/80 backdrop-blur-xl border-b border-slate-800/50 sticky top-0 z-40">
+          <div className="flex items-center gap-4 flex-1 max-w-xl">
+            <button className="lg:hidden text-slate-400 p-2" onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
+              <Menu size={24} />
+            </button>
+            <div className="relative w-full group">
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-indigo-500 transition-colors" size={20} />
+              <input
+                type="text"
+                placeholder="Pesquisar por clientes, projetos ou invoices..."
+                className="w-full bg-slate-900/50 border border-slate-800 rounded-2xl py-3 pl-12 pr-4 outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-slate-900 transition-all text-sm placeholder:text-slate-600"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <button className="relative p-2.5 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 hover:text-white hover:border-slate-700 transition-all">
+              <Bell size={20} />
+              <span className="absolute top-2 right-2 w-2 h-2 bg-indigo-500 rounded-full border-2 border-[#05080d]"></span>
+            </button>
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-xl shadow-lg shadow-indigo-600/20 flex items-center gap-2 transition-all active:scale-95 group"
+            >
+              <Plus size={20} className="group-hover:rotate-90 transition-transform duration-300" />
+              <span className="font-bold text-sm tracking-wide uppercase">Novo Registro</span>
+            </button>
+          </div>
+        </header>
+
+        {/* PAGE CONTENT */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
 
         {view === 'company-settings' && isAdmin ? (
           <CompanySettings />
